@@ -165,11 +165,9 @@ define(['bslGlobals', 'bslMetadata', 'snippets', 'bsl_language', 'vs/editor/edit
   eraseText = function () {
     
     setText('', editor.getModel().getFullModelRange(), false);
-
-    if (getOption('reviewMode')) {
-      removeReviewWidgets();
-      currentIssue = -1;
-    }
+    
+    removeReviewWidgets();
+    currentIssue = -1;
 
   }
 
@@ -762,7 +760,6 @@ define(['bslGlobals', 'bslMetadata', 'snippets', 'bsl_language', 'vs/editor/edit
     {
       disposeEditor();
       createEditor(language_id, originalText, currentTheme);
-      initEditorEventListenersAndProperies();
       originalText = '';
       editor.diffCount = 0;
     }
@@ -1749,9 +1746,6 @@ define(['bslGlobals', 'bslMetadata', 'snippets', 'bsl_language', 'vs/editor/edit
 
   setReviewIssues = function(issuesJSON) {
 
-    if (!getOption('reviewMode'))
-      return { errorDescription: 'Необходимо включить режим Code Review' };
-
     try {
 
       const issues = JSON.parse(issuesJSON);
@@ -1859,9 +1853,14 @@ define(['bslGlobals', 'bslMetadata', 'snippets', 'bsl_language', 'vs/editor/edit
   // #region init editor
   editor = undefined;
 
-  function createEditor(language_id, text, theme) {
+  createEditor = function(language_id, text, theme) {
 
-    editor = monaco.editor.create(document.getElementById("container"), {
+    const container = document.getElementById("container");
+
+    if (!container)
+      return;
+
+    editor = monaco.editor.create(container, {
       theme: theme,
       value: text,
       language: language_id,
@@ -1890,6 +1889,7 @@ define(['bslGlobals', 'bslMetadata', 'snippets', 'bsl_language', 'vs/editor/edit
     lineNumbersDedocrations = [];
 
     setDefaultStyle();
+    initEditorEventListenersAndProperies();
 
   }
 
@@ -1948,9 +1948,11 @@ define(['bslGlobals', 'bslMetadata', 'snippets', 'bsl_language', 'vs/editor/edit
       registerCodeLensProviders();
       setDefaultSnippets();
     
-      contextMenuEnabled = editor.getRawOptions().contextmenu;
-      editor.originalText = '';
-      editor.definitionBreadcrumbs = [];
+      if (editor) {
+        contextMenuEnabled = editor.getRawOptions().contextmenu;
+        editor.originalText = '';
+        editor.definitionBreadcrumbs = [];
+      }
 
     }
 
@@ -1970,7 +1972,6 @@ define(['bslGlobals', 'bslMetadata', 'snippets', 'bsl_language', 'vs/editor/edit
 
   }
 
-  initEditorEventListenersAndProperies();
   // #endregion
 
   // #region editor events
@@ -2243,7 +2244,7 @@ define(['bslGlobals', 'bslMetadata', 'snippets', 'bsl_language', 'vs/editor/edit
 
   }
 
-  function disposeEditor() {
+  disposeEditor = function() {
 
     if (editor) {
 
@@ -3911,7 +3912,7 @@ define(['bslGlobals', 'bslMetadata', 'snippets', 'bsl_language', 'vs/editor/edit
           }
           buttons.appendChild(button);
 
-          if (!getOption('readOnlyCodeReview')) {
+          if (getOption('reviewMode') && !getOption('readOnlyCodeReview')) {
             button = document.createElement('div');
             button.classList.add('review-delete');
             button.setAttribute('widgetid', widgetId);
@@ -3968,7 +3969,7 @@ define(['bslGlobals', 'bslMetadata', 'snippets', 'bsl_language', 'vs/editor/edit
           textarea.classList.add('review-message');
           editGroup.appendChild(textarea);
 
-          if (!getOption('readOnlyCodeReview')) {
+          if (getOption('reviewMode') && !getOption('readOnlyCodeReview')) {
             button = document.createElement('button');
             button.setAttribute('widgetid', widgetId);
             button.classList.add('review-save');
